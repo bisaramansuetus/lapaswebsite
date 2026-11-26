@@ -31,7 +31,7 @@ import { SeoHead } from '../components/SeoHead';
 import { LoadingState } from '../components/StateViews';
 import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
-import { BOOTSTRAPPED_ADMIN_EMAIL } from '../lib/firebase';
+import { BOOTSTRAPPED_ADMIN_EMAIL, FIREBASE_PROJECT_ID } from '../lib/firebase';
 import {
   deleteArticleAdmin,
   deleteBookAdmin,
@@ -203,11 +203,45 @@ export function AdminPage() {
             Gunakan akun Google Admin yang telah terdaftar di sistem Firebase Authentication untuk
             mengelola berita, artikel, buku, konsultasi hukum, dan moderasi karya.
           </p>
-          {authError && (
+          {authError && authError.startsWith('UNAUTHORIZED_DOMAIN:') ? (
+            <div className="p-4 bg-amber-50 border border-amber-200 text-xs text-stone-800 text-left space-y-2">
+              <p className="font-semibold text-amber-900">
+                Domain aplikasi belum terdaftar di Firebase Authentication.
+              </p>
+              <p className="leading-relaxed">
+                Tambahkan domain berikut ke daftar <strong>Authorized domains</strong> pada proyek
+                Firebase Anda:
+              </p>
+              <div className="flex items-center justify-between gap-2 bg-white border border-amber-200 px-2.5 py-1.5">
+                <code className="font-mono text-[11px] break-all">
+                  {authError.replace('UNAUTHORIZED_DOMAIN:', '')}
+                </code>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void navigator.clipboard.writeText(
+                      authError.replace('UNAUTHORIZED_DOMAIN:', '')
+                    )
+                  }
+                  className="text-[11px] font-medium text-[#14532D] hover:underline shrink-0 cursor-pointer"
+                >
+                  Salin
+                </button>
+              </div>
+              <a
+                href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block font-medium text-[#14532D] underline underline-offset-2 pt-1"
+              >
+                Buka Firebase Authentication Settings →
+              </a>
+            </div>
+          ) : authError ? (
             <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-800">
               {authError}
             </div>
-          )}
+          ) : null}
           <button
             type="button"
             onClick={signInWithGoogle}

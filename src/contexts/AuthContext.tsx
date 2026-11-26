@@ -98,6 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const msg = err instanceof Error ? err.message : 'Gagal masuk dengan Google.';
       if (msg.includes('popup-closed-by-user')) {
         setAuthError('Jendela masuk Google ditutup sebelum selesai.');
+      } else if (msg.includes('auth/unauthorized-domain')) {
+        setAuthError(
+          `UNAUTHORIZED_DOMAIN:${typeof window !== 'undefined' ? window.location.hostname : ''}`
+        );
       } else {
         setAuthError(msg);
       }

@@ -1,0 +1,6 @@
+{
+  "name": "LapAs — Lepaskan Amarahmu Panggil Allah Selalu",
+  "description": "Media literasi, publikasi, refleksi rohani, edukasi hukum, ruang ekspresi seni, dan katalog buku karya penulis Indonesia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

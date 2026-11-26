@@ -1,0 +1,266 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered user profile and access role metadata.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 200 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["admin", "editor", "reader"] },
+        "photoUrl": { "type": "string", "maxLength": 1500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "photoUrl", "createdAt", "updatedAt"]
+    },
+    "Article": {
+      "title": "Article",
+      "description": "Editorial publication item across Berita, Artikel & Opini, Rubrik Rohani, Motivasi, Puisi, and Seni Lukis.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "slug": { "type": "string", "minLength": 2, "maxLength": 200, "pattern": "^[a-z0-9-]+$" },
+        "section": {
+          "type": "string",
+          "enum": ["berita", "artikel-opini", "rohani", "motivasi", "puisi", "seni-lukis"]
+        },
+        "category": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "imageUrl": { "type": "string", "maxLength": 1500 },
+        "summary": { "type": "string", "minLength": 5, "maxLength": 600 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 50000 },
+        "metaTitle": { "type": "string", "maxLength": 160 },
+        "metaDescription": { "type": "string", "maxLength": 320 },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "publishedAt": { "type": "string", "maxLength": 40 },
+        "featured": { "type": "boolean" },
+        "medium": { "type": "string", "maxLength": 120 },
+        "dimensions": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "slug",
+        "section",
+        "category",
+        "authorName",
+        "authorId",
+        "imageUrl",
+        "summary",
+        "content",
+        "metaTitle",
+        "metaDescription",
+        "status",
+        "publishedAt",
+        "featured",
+        "medium",
+        "dimensions",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "Book catalog entry managed by admin before and after launch.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "slug": { "type": "string", "minLength": 2, "maxLength": 200, "pattern": "^[a-z0-9-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "authorBio": { "type": "string", "maxLength": 2000 },
+        "coverUrl": { "type": "string", "maxLength": 1500 },
+        "synopsis": { "type": "string", "minLength": 10, "maxLength": 10000 },
+        "launchDate": { "type": "string", "maxLength": 60 },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "status": { "type": "string", "enum": ["segera_hadir", "tersedia", "habis"] },
+        "orderLink": { "type": "string", "maxLength": 1000 },
+        "isDemo": { "type": "boolean" },
+        "featured": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "slug",
+        "authorName",
+        "authorBio",
+        "coverUrl",
+        "synopsis",
+        "launchDate",
+        "price",
+        "stock",
+        "status",
+        "orderLink",
+        "isDemo",
+        "featured",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Consultation": {
+      "title": "Consultation",
+      "description": "Private legal education and consultation inquiry submitted by visitors.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "minLength": 5, "maxLength": 200 },
+        "whatsapp": { "type": "string", "minLength": 8, "maxLength": 30 },
+        "topic": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "description": { "type": "string", "minLength": 15, "maxLength": 5000 },
+        "consentPrivacy": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["baru", "ditinjau", "selesai"] },
+        "adminNotes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name",
+        "email",
+        "whatsapp",
+        "topic",
+        "description",
+        "consentPrivacy",
+        "status",
+        "adminNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ArtworkSubmission": {
+      "title": "ArtworkSubmission",
+      "description": "Visitor-submitted poetry, paintings, reflections, or Salam Kenal profiles awaiting admin moderation.",
+      "type": "object",
+      "properties": {
+        "submitterName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "submitterEmail": { "type": "string", "format": "email", "minLength": 5, "maxLength": 200 },
+        "city": { "type": "string", "maxLength": 100 },
+        "type": { "type": "string", "enum": ["puisi", "seni-lukis", "tulisan", "salam-kenal"] },
+        "title": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 80 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 20000 },
+        "imageUrl": { "type": "string", "maxLength": 1500 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "moderatorNote": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "submitterName",
+        "submitterEmail",
+        "city",
+        "type",
+        "title",
+        "category",
+        "content",
+        "imageUrl",
+        "bio",
+        "status",
+        "moderatorNote",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Contributor": {
+      "title": "Contributor",
+      "description": "Published writer, artist, or reader profile featured in Salam Kenal.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "role": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "city": { "type": "string", "maxLength": 100 },
+        "bio": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "quote": { "type": "string", "maxLength": 400 },
+        "avatarUrl": { "type": "string", "maxLength": 1500 },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "city", "bio", "quote", "avatarUrl", "status", "createdAt", "updatedAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Editable platform configuration, About LapAs content, and contact details.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "tagline": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "heroHeadline": { "type": "string", "minLength": 5, "maxLength": 250 },
+        "heroSubheadline": { "type": "string", "minLength": 5, "maxLength": 600 },
+        "aboutProfile": { "type": "string", "maxLength": 5000 },
+        "aboutMeaning": { "type": "string", "maxLength": 3000 },
+        "vision": { "type": "string", "maxLength": 2000 },
+        "mission": { "type": "string", "maxLength": 4000 },
+        "goals": { "type": "string", "maxLength": 3000 },
+        "founderName": { "type": "string", "maxLength": 120 },
+        "founderRole": { "type": "string", "maxLength": 120 },
+        "founderBio": { "type": "string", "maxLength": 3000 },
+        "contactEmail": { "type": "string", "maxLength": 200 },
+        "contactWhatsapp": { "type": "string", "maxLength": 40 },
+        "contactAddress": { "type": "string", "maxLength": 300 },
+        "socialInstagram": { "type": "string", "maxLength": 300 },
+        "socialYoutube": { "type": "string", "maxLength": 300 },
+        "socialFacebook": { "type": "string", "maxLength": 300 },
+        "legalDisclaimer": { "type": "string", "maxLength": 2000 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "siteName",
+        "tagline",
+        "heroHeadline",
+        "heroSubheadline",
+        "aboutProfile",
+        "aboutMeaning",
+        "vision",
+        "mission",
+        "goals",
+        "founderName",
+        "founderRole",
+        "founderBio",
+        "contactEmail",
+        "contactWhatsapp",
+        "contactAddress",
+        "socialInstagram",
+        "socialYoutube",
+        "socialFacebook",
+        "legalDisclaimer",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile and admin role registry (PII isolated to owner and admins)."
+    },
+    "/articles/{articleId}": {
+      "schema": { "$ref": "#/entities/Article" },
+      "description": "Editorial publications across Berita, Artikel & Opini, Rohani, Motivasi, Puisi, and Seni Lukis."
+    },
+    "/books/{bookId}": {
+      "schema": { "$ref": "#/entities/Book" },
+      "description": "Books catalog managed via Admin Dashboard."
+    },
+    "/consultations/{consultationId}": {
+      "schema": { "$ref": "#/entities/Consultation" },
+      "description": "Private legal education consultation inquiries accessible strictly to Admins."
+    },
+    "/artwork_submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/ArtworkSubmission" },
+      "description": "Visitor creative submissions awaiting moderation before publication."
+    },
+    "/contributors/{contributorId}": {
+      "schema": { "$ref": "#/entities/Contributor" },
+      "description": "Contributor and reader Salam Kenal profiles."
+    },
+    "/site_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Public site editorial settings and About LapAs copy."
+    }
+  }
+}

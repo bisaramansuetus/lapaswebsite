@@ -1,0 +1,385 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Shared hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'mansuetobisara@gmail.com';
+    }
+
+    function isAdminUserDoc() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || isAdminUserDoc();
+    }
+
+    function isNonEmptyString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isBoundedString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    // Entity validation blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'photoUrl', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'photoUrl', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && isNonEmptyString(data.email, 3, 200)
+        && isNonEmptyString(data.displayName, 1, 120)
+        && data.role in ['admin', 'editor', 'reader']
+        && isBoundedString(data.photoUrl, 1500)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidArticle(data) {
+      return data.keys().hasAll([
+          'title', 'slug', 'section', 'category', 'authorName', 'authorId',
+          'imageUrl', 'summary', 'content', 'metaTitle', 'metaDescription',
+          'status', 'publishedAt', 'featured', 'medium', 'dimensions',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title', 'slug', 'section', 'category', 'authorName', 'authorId',
+          'imageUrl', 'summary', 'content', 'metaTitle', 'metaDescription',
+          'status', 'publishedAt', 'featured', 'medium', 'dimensions',
+          'createdAt', 'updatedAt'
+        ])
+        && isNonEmptyString(data.title, 3, 200)
+        && isNonEmptyString(data.slug, 2, 200)
+        && data.slug.matches('^[a-z0-9-]+$')
+        && data.section in ['berita', 'artikel-opini', 'rohani', 'motivasi', 'puisi', 'seni-lukis']
+        && isNonEmptyString(data.category, 2, 80)
+        && isNonEmptyString(data.authorName, 2, 120)
+        && isValidId(data.authorId)
+        && isBoundedString(data.imageUrl, 1500)
+        && isNonEmptyString(data.summary, 5, 600)
+        && isNonEmptyString(data.content, 10, 50000)
+        && isBoundedString(data.metaTitle, 160)
+        && isBoundedString(data.metaDescription, 320)
+        && data.status in ['draft', 'published']
+        && isBoundedString(data.publishedAt, 40)
+        && data.featured is bool
+        && isBoundedString(data.medium, 120)
+        && isBoundedString(data.dimensions, 80)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBook(data) {
+      return data.keys().hasAll([
+          'title', 'slug', 'authorName', 'authorBio', 'coverUrl', 'synopsis',
+          'launchDate', 'price', 'stock', 'status', 'orderLink', 'isDemo',
+          'featured', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title', 'slug', 'authorName', 'authorBio', 'coverUrl', 'synopsis',
+          'launchDate', 'price', 'stock', 'status', 'orderLink', 'isDemo',
+          'featured', 'createdAt', 'updatedAt'
+        ])
+        && isNonEmptyString(data.title, 2, 200)
+        && isNonEmptyString(data.slug, 2, 200)
+        && data.slug.matches('^[a-z0-9-]+$')
+        && isNonEmptyString(data.authorName, 2, 120)
+        && isBoundedString(data.authorBio, 2000)
+        && isBoundedString(data.coverUrl, 1500)
+        && isNonEmptyString(data.synopsis, 10, 10000)
+        && isBoundedString(data.launchDate, 60)
+        && data.price is number && data.price >= 0 && data.price <= 100000000
+        && data.stock is number && data.stock >= 0 && data.stock <= 1000000
+        && data.status in ['segera_hadir', 'tersedia', 'habis']
+        && isBoundedString(data.orderLink, 1000)
+        && data.isDemo is bool
+        && data.featured is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidConsultation(data) {
+      return data.keys().hasAll([
+          'name', 'email', 'whatsapp', 'topic', 'description',
+          'consentPrivacy', 'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name', 'email', 'whatsapp', 'topic', 'description',
+          'consentPrivacy', 'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && isNonEmptyString(data.name, 2, 120)
+        && isNonEmptyString(data.email, 5, 200)
+        && isNonEmptyString(data.whatsapp, 8, 30)
+        && isNonEmptyString(data.topic, 2, 120)
+        && isNonEmptyString(data.description, 15, 5000)
+        && data.consentPrivacy is bool
+        && data.status in ['baru', 'ditinjau', 'selesai']
+        && isBoundedString(data.adminNotes, 2000)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidArtworkSubmission(data) {
+      return data.keys().hasAll([
+          'submitterName', 'submitterEmail', 'city', 'type', 'title',
+          'category', 'content', 'imageUrl', 'bio', 'status',
+          'moderatorNote', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'submitterName', 'submitterEmail', 'city', 'type', 'title',
+          'category', 'content', 'imageUrl', 'bio', 'status',
+          'moderatorNote', 'createdAt', 'updatedAt'
+        ])
+        && isNonEmptyString(data.submitterName, 2, 120)
+        && isNonEmptyString(data.submitterEmail, 5, 200)
+        && isBoundedString(data.city, 100)
+        && data.type in ['puisi', 'seni-lukis', 'tulisan', 'salam-kenal']
+        && isNonEmptyString(data.title, 2, 200)
+        && isBoundedString(data.category, 80)
+        && isNonEmptyString(data.content, 10, 20000)
+        && isBoundedString(data.imageUrl, 1500)
+        && isBoundedString(data.bio, 1000)
+        && data.status in ['pending', 'approved', 'rejected']
+        && isBoundedString(data.moderatorNote, 1000)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidContributor(data) {
+      return data.keys().hasAll([
+          'name', 'role', 'city', 'bio', 'quote', 'avatarUrl', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name', 'role', 'city', 'bio', 'quote', 'avatarUrl', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isNonEmptyString(data.name, 2, 120)
+        && isNonEmptyString(data.role, 2, 120)
+        && isBoundedString(data.city, 100)
+        && isNonEmptyString(data.bio, 10, 2000)
+        && isBoundedString(data.quote, 400)
+        && isBoundedString(data.avatarUrl, 1500)
+        && data.status in ['draft', 'published']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll([
+          'siteName', 'tagline', 'heroHeadline', 'heroSubheadline',
+          'aboutProfile', 'aboutMeaning', 'vision', 'mission', 'goals',
+          'founderName', 'founderRole', 'founderBio',
+          'contactEmail', 'contactWhatsapp', 'contactAddress',
+          'socialInstagram', 'socialYoutube', 'socialFacebook',
+          'legalDisclaimer', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'siteName', 'tagline', 'heroHeadline', 'heroSubheadline',
+          'aboutProfile', 'aboutMeaning', 'vision', 'mission', 'goals',
+          'founderName', 'founderRole', 'founderBio',
+          'contactEmail', 'contactWhatsapp', 'contactAddress',
+          'socialInstagram', 'socialYoutube', 'socialFacebook',
+          'legalDisclaimer', 'updatedAt'
+        ])
+        && isNonEmptyString(data.siteName, 2, 120)
+        && isNonEmptyString(data.tagline, 2, 200)
+        && isNonEmptyString(data.heroHeadline, 5, 250)
+        && isNonEmptyString(data.heroSubheadline, 5, 600)
+        && isBoundedString(data.aboutProfile, 5000)
+        && isBoundedString(data.aboutMeaning, 3000)
+        && isBoundedString(data.vision, 2000)
+        && isBoundedString(data.mission, 4000)
+        && isBoundedString(data.goals, 3000)
+        && isBoundedString(data.founderName, 120)
+        && isBoundedString(data.founderRole, 120)
+        && isBoundedString(data.founderBio, 3000)
+        && isBoundedString(data.contactEmail, 200)
+        && isBoundedString(data.contactWhatsapp, 40)
+        && isBoundedString(data.contactAddress, 300)
+        && isBoundedString(data.socialInstagram, 300)
+        && isBoundedString(data.socialYoutube, 300)
+        && isBoundedString(data.socialFacebook, 300)
+        && isBoundedString(data.legalDisclaimer, 2000)
+        && data.updatedAt is timestamp;
+    }
+
+    // 1. Users (PII isolated)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          (isOwner(userId) && incoming().uid == request.auth.uid && incoming().role == 'reader') ||
+          isAdmin()
+        );
+      allow update: if isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isOwner(userId)
+            && incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'updatedAt'])) ||
+          (isAdmin()
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'role', 'updatedAt']))
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 2. Articles (Public published read; Admin CRUD)
+    match /articles/{articleId} {
+      allow get: if isValidId(articleId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(articleId)
+        && isAdmin()
+        && isValidArticle(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(articleId)
+        && isAdmin()
+        && isValidArticle(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'slug', 'section', 'category', 'authorName', 'authorId',
+          'imageUrl', 'summary', 'content', 'metaTitle', 'metaDescription',
+          'status', 'publishedAt', 'featured', 'medium', 'dimensions', 'updatedAt'
+        ]);
+      allow delete: if isValidId(articleId) && isAdmin();
+    }
+
+    // 3. Books (Public catalog read; Admin CRUD)
+    match /books/{bookId} {
+      allow get: if isValidId(bookId) && (existing().status in ['segera_hadir', 'tersedia', 'habis'] || isAdmin());
+      allow list: if existing().status in ['segera_hadir', 'tersedia', 'habis'] || isAdmin();
+      allow create: if isValidId(bookId)
+        && isAdmin()
+        && isValidBook(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(bookId)
+        && isAdmin()
+        && isValidBook(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'slug', 'authorName', 'authorBio', 'coverUrl', 'synopsis',
+          'launchDate', 'price', 'stock', 'status', 'orderLink', 'isDemo',
+          'featured', 'updatedAt'
+        ]);
+      allow delete: if isValidId(bookId) && isAdmin();
+    }
+
+    // 4. Legal Consultations (Public write-once with consent; strictly Admin read/manage)
+    match /consultations/{consultationId} {
+      allow get: if isValidId(consultationId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(consultationId)
+        && isValidConsultation(incoming())
+        && incoming().consentPrivacy == true
+        && incoming().status == 'baru'
+        && incoming().adminNotes == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(consultationId)
+        && isAdmin()
+        && isValidConsultation(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNotes', 'updatedAt']);
+      allow delete: if isValidId(consultationId) && isAdmin();
+    }
+
+    // 5. Artwork & Writing Submissions (Public submit as pending; strictly Admin moderate)
+    match /artwork_submissions/{submissionId} {
+      allow get: if isValidId(submissionId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(submissionId)
+        && isValidArtworkSubmission(incoming())
+        && incoming().status == 'pending'
+        && incoming().moderatorNote == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(submissionId)
+        && isAdmin()
+        && isValidArtworkSubmission(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'moderatorNote', 'updatedAt']);
+      allow delete: if isValidId(submissionId) && isAdmin();
+    }
+
+    // 6. Contributors / Salam Kenal (Public published read; Admin CRUD)
+    match /contributors/{contributorId} {
+      allow get: if isValidId(contributorId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(contributorId)
+        && isAdmin()
+        && isValidContributor(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(contributorId)
+        && isAdmin()
+        && isValidContributor(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'role', 'city', 'bio', 'quote', 'avatarUrl', 'status', 'updatedAt'
+        ]);
+      allow delete: if isValidId(contributorId) && isAdmin();
+    }
+
+    // 7. Site Settings (Public read for general; Admin write)
+    match /site_settings/{settingId} {
+      allow get: if isValidId(settingId) && (settingId == 'general' || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(settingId)
+        && isAdmin()
+        && isValidSiteSettings(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(settingId)
+        && isAdmin()
+        && isValidSiteSettings(incoming())
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'siteName', 'tagline', 'heroHeadline', 'heroSubheadline',
+          'aboutProfile', 'aboutMeaning', 'vision', 'mission', 'goals',
+          'founderName', 'founderRole', 'founderBio',
+          'contactEmail', 'contactWhatsapp', 'contactAddress',
+          'socialInstagram', 'socialYoutube', 'socialFacebook',
+          'legalDisclaimer', 'updatedAt'
+        ]);
+      allow delete: if isValidId(settingId) && isAdmin();
+    }
+  }
+}

@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --color-ivory: #FBF9F5;
+  --color-alabaster: #F4EFE6;
+  --color-forest: #14532D;
+  --color-forest-dark: #0F3D21;
+  --color-navy: #172554;
+  --color-ink: #1C1917;
+  --color-ink-muted: #57534E;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    background-color: #FBF9F5;
+    color: #1C1917;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+}
+
+/* Comfortable editorial drop-cap for long-form prose */
+.editorial-dropcap::first-letter {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  line-height: 0.85;
+  font-weight: 600;
+  float: left;
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+  color: #14532D;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
